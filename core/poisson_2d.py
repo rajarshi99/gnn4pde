@@ -170,7 +170,7 @@ class Poisson_2d:
             h_vals[e_id] = np.max(lens)
         return h_vals
 
-    def plot_on_mesh(self, u_inp, title = " ", fname = False, plot_with_lines = True):
+    def plot_on_mesh(self, u_inp, title = " ", fname = None, plot_with_lines = True):
         cplot = plt.tricontourf(self.triang, u_inp, levels = 100)
         plt.colorbar(cplot)
         if plot_with_lines:
@@ -179,7 +179,7 @@ class Poisson_2d:
         plt.ylabel('y')
         plt.title(title)
 
-        if fname == False:
+        if fname == None:
             plt.show()
         else:
             plt.savefig(fname)
