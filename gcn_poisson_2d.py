@@ -10,11 +10,13 @@ Here we define
 import jax
 import jax.numpy as jnp
 
-from scirex.core.dl.gcn import GCN, GCNModel
+from core.gcn import GCN, GCNModel
 from core.poisson_2d import Poisson_2d
 
 import triangle as tr
 import sys
+
+import matplotlib.pyplot as plt
 
 key_for_generating_random_numbers = jax.random.PRNGKey(42)
 
@@ -59,7 +61,8 @@ K_mat, f_vec = p_2d.get_K_f()
 Kf = jnp.hstack((K_mat,f_vec.reshape(-1,1)))
 
 # Adjacency matrix using the stiffness matrix
-A = jnp.where(jnp.abs(K_mat) > 1e-8, 1, 0)
+A = jnp.zeros_like(K_mat, dtype=jnp.int8)
+A = A.at[jnp.nonzero(K_mat)].set(1)
 deg = A.sum(axis=0)
 
 # Guess solution shape is num_unknowns X 1
@@ -83,9 +86,14 @@ def loss_fn(u, Kf):
     return jnp.sum(res*res)
 
 # Training of the GCN model
-for i in range(10):
+history_list = []
+num_fits = 10
+iters_per_fit = 100
+for i in range(num_fits):
     model = GCNModel(gcn, loss_fn)
-    gcn = model.fit(u_gcn, A, deg, Kf, learning_rate=5e-2, num_iters=100)
+    gcn, history = model.fit(u_gcn, A, deg, Kf,
+                             learning_rate=5e-2, num_iters=iters_per_fit)
+    history_list.append(history)
     u_gcn = gcn(u_gcn, A, deg)
 u_gcn = p_2d.assemble_sol(u_gcn.reshape(-1))
 
@@ -105,3 +113,18 @@ p_2d.plot_on_mesh(jnp.abs(u_exct - u_fem),
 p_2d.plot_on_mesh(jnp.abs(u_exct - u_gcn),
                   f"|Exact solution - GCN solution| {num_points}",
                   f"{output_dir}{num_points}_u_gcn_err.png")
+
+# Plot the loss history
+for history_id,history in enumerate(history_list):
+    iter_ids = history["iter_ids"]
+    iter_ids += history_id*iters_per_fit
+    loss_vals = history["loss_vals"]
+    plt.plot(iter_ids, loss_vals, color="k")
+    plt.axvline(x=iter_ids[0], color="r")
+plt.xlabel("iter_id")
+plt.ylabel("loss")
+plt.yscale("log")
+plt.grid()
+plt.savefig(f"{output_dir}{num_points}_loss_gcn.png")
+plt.close()
+
