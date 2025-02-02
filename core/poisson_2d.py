@@ -138,8 +138,8 @@ class Poisson_2d:
         self.u_sol = self.get_u_fem()
         return self.u_sol
 
-    def update_sol(self, u_unknown_new):
-        self.u_sol = self.u_sol.at[np.array(self.vert_unknown_list)].set(u_unknown_new)
+    def assemble_sol(self, u_unknown_new):
+        return self.u_sol.at[np.array(self.vert_unknown_list)].set(u_unknown_new)
 
     def K_norm(self, v):
         # Not sure if this is correct
@@ -170,7 +170,7 @@ class Poisson_2d:
             h_vals[e_id] = np.max(lens)
         return h_vals
 
-    def plot_on_mesh(self, u_inp, title = " ", fname = None, plot_with_lines = True):
+    def plot_on_mesh(self, u_inp, title = " ", fname = None, plot_with_lines = False):
         cplot = plt.tricontourf(self.triang, u_inp, levels = 100)
         plt.colorbar(cplot)
         if plot_with_lines:

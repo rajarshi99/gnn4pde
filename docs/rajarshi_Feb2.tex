@@ -1,0 +1,39 @@
+\documentclass{beamer}
+
+\usepackage{amsmath}
+\usepackage{tikz}
+
+\usetheme{Frankfurt}
+\title{Research Update}
+\author{Rajarshi Dasgupta}
+\institute{{\footnotesize PhD student} \\ AiREX}
+\beamertemplatenavigationsymbolsempty
+
+\newcommand{\fr}[2]{
+	\begin{frame}
+		\frametitle{#1}
+		#2
+	\end{frame}
+}
+
+\newcommand{\alis}[1]{
+	\begin{align*}
+		#1
+	\end{align*}
+}
+
+\newcommand{\pd}[2]{
+	\frac{\partial #1}{\partial #2}
+}
+
+\newcommand{\cmmt}[1]{}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\fr{Poisson 2D}{
+	\includegraphics[width=\linewidth]{images/16_u_exct.png}
+}
+
+\end{document}
