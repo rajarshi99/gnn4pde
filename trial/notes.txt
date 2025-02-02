@@ -1,3 +1,4 @@
 Feb 2: GCN example did not work as well as expected
+Works good for 4X4 grid
 I ran it for a grid of 16X16 and 32X32
 It sort of worked for the top right corner for 16X16

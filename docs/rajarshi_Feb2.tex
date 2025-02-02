@@ -26,14 +26,81 @@
 	\frac{\partial #1}{\partial #2}
 }
 
+\newcommand{\pdbder}[2]{\frac{\partial^2 #1}{\partial #2^2}}
+
 \newcommand{\cmmt}[1]{}
 
 \begin{document}
 
 \frame{\titlepage}
 
-\fr{Poisson 2D}{
-	\includegraphics[width=\linewidth]{images/16_u_exct.png}
+\fr{Poisson 2D: The example}{
+\begin{align*}
+  &\pdbder{u}{x} + \pdbder{u}{y} = 0 & \forall -1 < x,y < 1 \\
+	&u(x,y) = xy & \mbox{for } x \mbox{ or } y = \pm 1
+\end{align*}
+\begin{center}
+	\includegraphics[width=0.45\linewidth]{Feb2/16_u_exct.png}
+	\includegraphics[width=0.45\linewidth]{Feb2/16_u_fem_err.png}
+\end{center}
 }
 
+\fr{Poisson 2D: Implementation}{
+	\begin{columns}
+		\column{0.5\textwidth}{
+		\begin{itemize}
+			\item Stiffness matrix $K$
+			\item Consistent load vector $f$
+			\item Adjacency matrix $A$
+			\item Degree array $d$
+		\end{itemize}
+		}
+		\column{0.5\textwidth}{
+		\begin{itemize}
+			\item GCN layers: 1, 10, 10, 1
+			\item num fits: 10
+			\item iters per fit: 100
+			\item learning rate: $5 \times 10^{-2}$
+			\item num check points: 5 per fit
+		\end{itemize}
+		}
+	\end{columns}
+
+	\begin{center}
+		Algorithm
+		\begin{enumerate}
+			\item Choose random solution $u$
+			\item Initialise gcn
+			\item Fit gcn to for loss $|Ku - f|_2^2$
+			\item $u \leftarrow$ gcn$(u, A, d)$
+		\end{enumerate}
+	\end{center}
+}
+
+\fr{GCN run: 4 $\times$ 4 grid}{
+\begin{center}
+	\includegraphics[width=0.45\linewidth]{Feb2/4_u_exct.png}
+	\includegraphics[width=0.45\linewidth]{Feb2/4_u_gcn.png}
+	\includegraphics[width=0.45\linewidth]{Feb2/4_loss_gcn.png}
+	\includegraphics[width=0.45\linewidth]{Feb2/4_u_gcn_err.png}
+\end{center}
+}
+
+\fr{GCN run: 8 $\times$ 8 grid}{
+\begin{center}
+	\includegraphics[width=0.45\linewidth]{Feb2/8_u_exct.png}
+	\includegraphics[width=0.45\linewidth]{Feb2/8_u_gcn.png}
+	\includegraphics[width=0.45\linewidth]{Feb2/8_loss_gcn.png}
+	\includegraphics[width=0.45\linewidth]{Feb2/8_u_gcn_err.png}
+\end{center}
+}
+
+\fr{GCN run: 16 $\times$ 16 grid}{
+\begin{center}
+	\includegraphics[width=0.45\linewidth]{Feb2/16_u_exct.png}
+	\includegraphics[width=0.45\linewidth]{Feb2/16_u_gcn.png}
+	\includegraphics[width=0.45\linewidth]{Feb2/16_loss_gcn.png}
+	\includegraphics[width=0.45\linewidth]{Feb2/16_u_gcn_err.png}
+\end{center}
+}
 \end{document}
