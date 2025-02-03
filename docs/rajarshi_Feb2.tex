@@ -71,8 +71,10 @@
 		\begin{enumerate}
 			\item Choose random solution $u$
 			\item Initialise gcn
-			\item Fit gcn to for loss $|Ku - f|_2^2$
+			\item Fit gcn to the loss $|Kv - f|_2^2$ \\
+				where $v = $ gcn$(u, A, d)$
 			\item $u \leftarrow$ gcn$(u, A, d)$
+			\item Go back to step 3 or terminate
 		\end{enumerate}
 	\end{center}
 }
