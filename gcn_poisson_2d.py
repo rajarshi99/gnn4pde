@@ -88,9 +88,7 @@ def main(
 
 # Training of the GCN model
     history_list = []
-    num_fits = 10
-    iters_per_fit = 100
-    for i in range(num_fits):
+    for _ in range(num_fits):
         model = GCNModel(gcn, loss_fn)
         gcn, history = model.fit(u_gcn, A, deg, Kf,
                                  learning_rate=learning_rate,
