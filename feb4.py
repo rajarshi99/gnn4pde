@@ -3,7 +3,7 @@ from pathlib import Path
 
 fname = "feb4.csv"
 with open(fname, "a") as file:
-    print("num_points, iters_per_fit, learning_rate, path", file=file)
+    print("num_points,iters_per_fit,learning_rate,path", file=file)
 
 expt_id = 0
 for num_points in [4, 8, 16]:
