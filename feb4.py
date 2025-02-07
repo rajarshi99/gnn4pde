@@ -1,6 +1,8 @@
 from gcn_poisson_2d import main
 from pathlib import Path
 
+from core.make_html_table.py import make_html_table
+
 fname = "feb4.csv"
 with open(fname, "a") as file:
     print("num_points,iters_per_fit,learning_rate,path", file=file)
@@ -19,3 +21,5 @@ for num_points in [4, 8, 16]:
             with open(fname, "a") as file:
                 print(f"{num_points}, {iters_per_fit}, {learning_rate}, {output_dir}", file=file)
             expt_id += 1
+
+make_html_table(fname, "path")
