@@ -38,7 +38,7 @@ def main(
             learning_rate = 5e-2,
             output_dir = "trial/"
             ):
-    key_for_generating_random_numbers = jax.random.PRNGKey(42)
+    key_for_generating_random_numbers = jax.random.PRNGKey(69)
 
     x_1d = jnp.linspace(-1,1,num_points, dtype=jnp.float32)
     y_1d = jnp.linspace(-1,1,num_points, dtype=jnp.float32)
