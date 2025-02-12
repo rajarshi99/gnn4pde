@@ -32,6 +32,8 @@ def f(x,y):
 
 def main(
             num_points,
+            u = u,
+            f = f,
             gcn_layers = [1, 10, 10, 1],
             num_fits = 10,
             iters_per_fit = 100,
@@ -127,6 +129,11 @@ def main(
     plt.grid()
     plt.savefig(f"{output_dir}{num_points}_loss_gcn.png")
     plt.close()
+
+    relative_l2_error = \
+            jnp.linalg.norm(u_gcn - u_exct) / jnp.linalg.norm(u_exct)
+
+    return relative_l2_error
 
 if __name__ == "__main__":
     try:
