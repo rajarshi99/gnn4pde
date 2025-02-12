@@ -37,7 +37,7 @@ expt_id = 0
 for num_points in [4, 8, 16]:
     for iters_per_fit in [50, 100, 200, 500]:
         for learning_rate in [5e-2, 5e-3, 1e-3, 5e-4]:
-            output_dir = f"{fname}/out{expt_id:03d}/"
+            output_dir = f"{fname}_out/expt{expt_id:03d}/"
             path = Path(output_dir)
             path.mkdir(parents=True, exist_ok=True)
             rel_l2_err = main(num_points=num_points,
