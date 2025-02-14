@@ -102,17 +102,40 @@ class Poisson_2d:
         K_known = np.zeros((self.n_unknown,self.n_known))
         f_glob = np.zeros(self.n_unknown)
 
+        # Explain and change names maybe
+        K_glob_sparse = {
+                "ind": [],
+                "val": []
+                }
+        f_glob_sparse = {
+                "ind": [],
+                "val": []
+                }
+
         for v_ind, v_id in enumerate(self.vert_unknown_list):
             for u_ind, u_id in enumerate(self.vert_unknown_list):
                 if (v_id,u_id) in K_glob_dict:
-                    K_glob = K_glob.at[v_ind,u_ind].set(np.sum(np.array(K_glob_dict[(v_id,u_id)])))
+                    val = np.sum(np.array(K_glob_dict[(v_id,u_id)]))
+                    K_glob = K_glob.at[v_ind,u_ind].set(val)
+                    K_glob_sparse["ind"].append([v_id,u_id])
+                    K_glob_sparse["val"].append(val)
             for u_ind, u_id in enumerate(self.vert_known_list):
                 if (v_id,u_id) in K_glob_dict:
-                    K_known = K_known.at[v_ind,u_ind].set(np.sum(np.array(K_glob_dict[(v_id,u_id)])))
-            f_glob = f_glob.at[v_ind].set(np.sum(np.array(f_glob_dict[v_id])))
+                    val = np.sum(np.array(K_glob_dict[(v_id,u_id)]))
+                    K_known = K_known.at[v_ind,u_ind].set(val)
+            val = np.sum(np.array(f_glob_dict[v_id]))
+            f_glob = f_glob.at[v_ind].set(val)
+            f_glob_sparse["ind"].append(v_id)
+            f_glob_sparse["val"].append(val)
 
         f_glob -= np.dot(K_known,self.u_known)
         self.clock_off()
+
+        self.K_glob_dict = K_glob_dict
+        self.f_glob_dict = f_glob_dict
+
+        self.K_glob_sparse = K_glob_sparse
+        self.f_glob_sparse = f_glob_sparse
 
         self.K_glob = K_glob
         self.f_glob = f_glob
