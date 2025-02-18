@@ -63,9 +63,14 @@ def main(
     n_nodes = p_2d.u_sol.shape[0]
     K_mat, f_vec = p_2d.get_K_f()
 
+    # Interior adjacency matrix using the stiffness matrix
+    A_int = jnp.zeros_like(K_mat, dtype=jnp.int8)
+    A_int = A_int.at[jnp.nonzero(K_mat)].set(1)
+    d_int = A_int.sum(axis=0)
+
     # EXPLAIN
     K_glob_sparse = p_2d.K_glob_sparse
-    K_full = jnp.zeros((n_nodes,n_nodes), dtype=jnp.int8)
+    K_full = jnp.zeros((n_nodes,n_nodes))
     K_full = K_full.at[tuple(zip(
         *K_glob_sparse["ind"]
         ))].set(K_glob_sparse["val"])
@@ -86,20 +91,16 @@ def main(
         *K_glob_sparse["ind"]
         ))].set(1)
     d_full = A_full.sum(axis=0)
-
-    # Interior adjacency matrix using the stiffness matrix
-    A_int = jnp.zeros_like(K_mat, dtype=jnp.int8)
-    A_int = A_int.at[jnp.nonzero(K_mat)].set(1)
-    d_int = A_int.sum(axis=0)
+    d_full = jnp.where(d_full == 0, 1, d_full)
 
     # Guess solution shape is num_unknowns X 1
     n_unknown = p_2d.n_unknown
     init_key, key_for_generating_random_numbers = \
             jax.random.split(key_for_generating_random_numbers)
-    u_int = jax.random.normal(init_key, (n_unknown,))
+    u_int = 5*jax.random.normal(init_key, (n_unknown,1))
 
     # Th boundary data is assembled in the guess solution
-    u_gcn = p_2d.assemble_sol(u_int).reshape(-1,1)
+    u_gcn = p_2d.assemble_sol(u_int.flatten()).reshape(-1,1)
 
     # GCN with 2 hidden layers,
     # Last activation func as identity
@@ -124,13 +125,15 @@ def main(
                                  num_iters=iters_per_fit)
         history_list.append(history)
         u_int = gcn(u_int, A_int, d_int)
-        u_gcn = p_2d.assemble_sol(u_int).reshape(-1,1)
+        u_gcn = p_2d.assemble_sol(u_int.flatten()).reshape(-1,1)
 
-    u_gcn = p_2d.assemble_sol(u_gcn.reshape(-1))
+    u_gcn = u_gcn.flatten()
 
     p_2d.plot_on_mesh(u_gcn,
                       f"GCN solution {num_points}",
-                      f"{output_dir}{num_points}_u_gcn.png")
+                      f"{output_dir}{num_points}_u_gcn.png",
+                      plot_with_lines=True,
+                      )
 
     u_fem = p_2d.get_u_fem()
     p_2d.plot_on_mesh(u_fem,
@@ -162,7 +165,7 @@ def main(
     relative_l2_error = \
             jnp.linalg.norm(u_gcn - u_exct) / jnp.linalg.norm(u_exct)
 
-    return relative_l2_error
+    return relative_l2_error, u_fem
 
 if __name__ == "__main__":
     try:
@@ -170,4 +173,7 @@ if __name__ == "__main__":
     except:
         num_points = 4
 
-    tt = main(num_points, output_dir = "trial/")
+    tt = main(num_points, output_dir = "trial/",
+              iters_per_fit=1000,
+              learning_rate=1e-4)
+    print(tt)
