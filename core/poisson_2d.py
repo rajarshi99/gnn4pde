@@ -115,14 +115,16 @@ class Poisson_2d:
         for v_ind, v_id in enumerate(self.vert_unknown_list):
             for u_ind, u_id in enumerate(self.vert_unknown_list):
                 if (v_id,u_id) in K_glob_dict:
-                    val = np.sum(np.array(K_glob_dict[(v_id,u_id)]))
+                    val = np.sum(np.array(K_glob_dict[(v_id,u_id)])).item()
                     K_glob = K_glob.at[v_ind,u_ind].set(val)
                     K_glob_sparse["ind"].append([v_id,u_id])
                     K_glob_sparse["val"].append(val)
             for u_ind, u_id in enumerate(self.vert_known_list):
                 if (v_id,u_id) in K_glob_dict:
-                    val = np.sum(np.array(K_glob_dict[(v_id,u_id)]))
+                    val = np.sum(np.array(K_glob_dict[(v_id,u_id)])).item()
                     K_known = K_known.at[v_ind,u_ind].set(val)
+                    K_glob_sparse["ind"].append([v_id,u_id])
+                    K_glob_sparse["val"].append(val)
             val = np.sum(np.array(f_glob_dict[v_id]))
             f_glob = f_glob.at[v_ind].set(val)
             f_glob_sparse["ind"].append(v_id)
