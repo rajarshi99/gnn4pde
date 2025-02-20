@@ -109,7 +109,7 @@ class Poisson_2d:
                 }
         f_glob_sparse = {
                 "ind": [],
-                "val": []
+                "val": [],
                 }
 
         for v_ind, v_id in enumerate(self.vert_unknown_list):
@@ -125,7 +125,7 @@ class Poisson_2d:
                     K_known = K_known.at[v_ind,u_ind].set(val)
                     K_glob_sparse["ind"].append([v_id,u_id])
                     K_glob_sparse["val"].append(val)
-            val = np.sum(np.array(f_glob_dict[v_id]))
+            val = np.sum(np.array(f_glob_dict[v_id])).item()
             f_glob = f_glob.at[v_ind].set(val)
             f_glob_sparse["ind"].append(v_id)
             f_glob_sparse["val"].append(val)
