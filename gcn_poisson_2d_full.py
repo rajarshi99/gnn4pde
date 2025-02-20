@@ -97,7 +97,7 @@ def main(
     n_unknown = p_2d.n_unknown
     init_key, key_for_generating_random_numbers = \
             jax.random.split(key_for_generating_random_numbers)
-    u_int = 5*jax.random.normal(init_key, (n_unknown,1))
+    u_int = jax.random.normal(init_key, (n_unknown,1))
 
     # Th boundary data is assembled in the guess solution
     u_gcn = p_2d.assemble_sol(u_int.flatten()).reshape(-1,1)
@@ -125,6 +125,7 @@ def main(
                                  num_iters=iters_per_fit)
         history_list.append(history)
         u_int = gcn(u_int, A_int, d_int)
+        # u_gcn = gcn(u_gcn, A_full, d_full)
         u_gcn = p_2d.assemble_sol(u_int.flatten()).reshape(-1,1)
 
     u_gcn = u_gcn.flatten()
@@ -165,7 +166,7 @@ def main(
     relative_l2_error = \
             jnp.linalg.norm(u_gcn - u_exct) / jnp.linalg.norm(u_exct)
 
-    return relative_l2_error, u_fem
+    return relative_l2_error, f_vec, f_full, f_glob_sparse["val"]
 
 if __name__ == "__main__":
     try:
@@ -174,6 +175,7 @@ if __name__ == "__main__":
         num_points = 4
 
     tt = main(num_points, output_dir = "trial/",
+              num_fits=10,
               iters_per_fit=1000,
               learning_rate=1e-4)
     print(tt)
