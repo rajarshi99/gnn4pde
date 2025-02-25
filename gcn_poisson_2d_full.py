@@ -166,7 +166,7 @@ def main(
     relative_l2_error = \
             jnp.linalg.norm(u_gcn - u_exct) / jnp.linalg.norm(u_exct)
 
-    return relative_l2_error, f_vec, f_full, f_glob_sparse["val"]
+    return relative_l2_error
 
 if __name__ == "__main__":
     try:

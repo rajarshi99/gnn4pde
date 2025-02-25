@@ -33,6 +33,8 @@ def f(x,y):
 
 def main(
             num_points,
+            u,
+            f,
             gcn_layers = [2, 10, 10, 1],
             num_iters = 100,
             learning_rate = 5e-2,
@@ -125,7 +127,10 @@ def main(
     plt.savefig(f"{output_dir}{num_points}_loss_gcn.png")
     plt.close()
 
-    return K_mat, f_vec, u_exct, xy, vert_unknown_list
+    relative_l2_error = \
+            jnp.linalg.norm(u_gcn - u_exct) / jnp.linalg.norm(u_exct)
+
+    return relative_l2_error
 
 if __name__ == "__main__":
     try:
@@ -133,5 +138,4 @@ if __name__ == "__main__":
     except:
         num_points = 4
 
-    K_mat, f_vec, u_exct, xy, vert_unknown_list = \
-        main(num_points, num_iters=10000, learning_rate=5e-4, output_dir = "trial/")
+    main(num_points, u, f, num_iters=10000, learning_rate=5e-4, output_dir = "trial/")
