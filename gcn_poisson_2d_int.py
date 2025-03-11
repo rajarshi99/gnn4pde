@@ -122,11 +122,11 @@ def main(
         iter_ids += history_id*iters_per_fit
         loss_vals = history["loss_vals"]
         plt.plot(iter_ids, loss_vals, color="k")
-        plt.axvline(x=iter_ids[0], color="r")
+        plt.axvline(x=iter_ids[0], color="r", linestyle='--', alpha=0.5)
     plt.xlabel("iter_id")
     plt.ylabel("loss")
     plt.yscale("log")
-    plt.grid()
+    # plt.grid()
     plt.savefig(f"{output_dir}{num_points}_loss_gcn.png")
     plt.close()
 
