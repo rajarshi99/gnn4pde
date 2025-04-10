@@ -40,7 +40,10 @@ def main(
             learning_rate = 5e-2,
             output_dir = "trial/"
             ):
-    key_for_generating_random_numbers = jax.random.PRNGKey(42)
+    key_for_generating_random_numbers = jax.random.PRNGKey(69)
+
+    plt.rcParams['font.size'] = 18
+    plt.rcParams['savefig.bbox'] = 'tight'
 
     x_1d = jnp.linspace(-1,1,num_points, dtype=jnp.float32)
     y_1d = jnp.linspace(-1,1,num_points, dtype=jnp.float32)
@@ -58,6 +61,9 @@ def main(
     p_2d.plot_on_mesh(u_exct,
                       f"Exact solution {num_points}",
                       f"{output_dir}{num_points}_u_exct.png")
+    p_2d.plot_on_mesh(u_exct,
+                      "",
+                      f"{output_dir}{num_points}_u_exct.pgf")
 
     # Gloabal stiffness matrix and consistent load vector
     K_mat, f_vec = p_2d.get_K_f()
@@ -82,7 +88,8 @@ def main(
     model_key, key_for_generating_random_numbers = \
             jax.random.split(key_for_generating_random_numbers)
     gcn = GCN(gcn_layers,
-              [jnp.tanh] * (len(gcn_layers)-2) + [lambda x: x],
+              # [jnp.tanh] * (len(gcn_layers)-2) + [lambda x: x],
+              [jax.nn.relu] * (len(gcn_layers)-1),
               model_key)
 
     # Loss is typically a func of output and target
@@ -99,33 +106,64 @@ def main(
     u_gcn = gcn(xy, A, d).flatten()
     u_gcn = p_2d.assemble_sol(u_gcn)
     p_2d.plot_on_mesh(u_gcn,
-                      f"GCN solution {num_points}",
+                      f"GCN solution",
                       f"{output_dir}{num_points}_u_gcn.png")
+    p_2d.plot_on_mesh(u_gcn,
+                      "",
+                      f"{output_dir}{num_points}_u_gcn.pgf")
+
+    p_2d.plot_on_mesh(u_gcn,
+                      f"GCN solution",
+                      f"{output_dir}{num_points}_u_gcn_with_mesh.png",
+                      plot_with_lines = True)
+    p_2d.plot_on_mesh(u_gcn,
+                      "",
+                      f"{output_dir}{num_points}_u_gcn_with_mesh.pgf",
+                      plot_with_lines = True)
 
     u_fem = p_2d.get_u_fem()
     p_2d.plot_on_mesh(u_fem,
-                      f"FEM solution {num_points}",
+                      f"FEM solution",
                       f"{output_dir}{num_points}_u_fem.png")
+    p_2d.plot_on_mesh(u_fem,
+                      "",
+                      f"{output_dir}{num_points}_u_fem.pgf")
 
     p_2d.plot_on_mesh(jnp.abs(u_exct - u_fem),
-                      f"|Exact solution - FEM solution| {num_points}",
+                      f"|Exact solution - FEM solution|",
                       f"{output_dir}{num_points}_u_fem_err.png")
+    p_2d.plot_on_mesh(jnp.abs(u_exct - u_fem),
+                      "",
+                      f"{output_dir}{num_points}_u_fem_err.pgf")
 
     p_2d.plot_on_mesh(jnp.abs(u_exct - u_gcn),
-                      f"|Exact solution - GCN solution| {num_points}",
+                      f"|Exact solution - GCN solution|",
                       f"{output_dir}{num_points}_u_gcn_err.png")
+    p_2d.plot_on_mesh(jnp.abs(u_exct - u_gcn),
+                      "",
+                      f"{output_dir}{num_points}_u_gcn_err.pgf")
 
     # Plot the loss history
     iter_ids = history["iter_ids"]
     loss_vals = history["loss_vals"]
     plt.plot(iter_ids, loss_vals, color="k")
 
-    plt.xlabel("iter_id")
+    plt.xlabel("iteration")
     plt.ylabel("loss")
     plt.yscale("log")
     plt.grid()
     plt.savefig(f"{output_dir}{num_points}_loss_gcn.png")
+    plt.savefig(f"{output_dir}{num_points}_loss_gcn.pgf")
     plt.close()
+
+    jnp.savez(f"{output_dir}details.npz",
+              vertices = domain['vertices'],
+              triangles = domain['triangles'],
+              vertex_markers = domain['vertex_markers'],
+              u_gcn = u_gcn,
+              u_exct = u_exct,
+              u_fem = u_fem
+              )
 
     relative_l2_error = \
             jnp.linalg.norm(u_gcn - u_exct) / jnp.linalg.norm(u_exct)
