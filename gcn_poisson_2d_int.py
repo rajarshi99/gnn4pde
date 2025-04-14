@@ -168,16 +168,16 @@ if __name__ == "__main__":
     try:
         num_points = int(sys.argv[1])
     except:
-        num_points = 6
+        num_points = 12
 
     plt.rcParams['font.size'] = 18
     plt.rcParams['savefig.bbox'] = 'tight'
 
     rel_l2_err, h_list = main(
             num_points,
-            gcn_layers = [1] + [30]*2 + [1],
-            iters_per_fit = 4000,
+            gcn_layers = [1] + [30]*3 + [1],
+            iters_per_fit = 10000,
             num_fits = 1,
-            learning_rate = 0.005,
-            output_dir = "apr1/"
+            learning_rate = 0.0005,
+            output_dir = "apr14/"
             )
