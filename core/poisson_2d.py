@@ -196,7 +196,7 @@ class Poisson_2d:
         return h_vals
 
     def plot_on_mesh(self, u_inp, title = " ", fname = None, plot_with_lines = False):
-        cplot = plt.tricontourf(self.triang, u_inp, levels = 200)
+        cplot = plt.tricontourf(self.triang, u_inp, cmap = "jet", levels = 200)
         plt.colorbar(cplot)
         if plot_with_lines:
             plt.triplot(self.triang, 'ko-')
