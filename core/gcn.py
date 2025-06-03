@@ -151,7 +151,9 @@ class GCNModel:
         gcn = self.gcn
         history = {
                 "iter_ids": jnp.zeros(num_check_points),
-                "loss_vals": jnp.zeros(num_check_points)
+                "loss_vals": jnp.zeros(num_check_points),
+                "metric_vals":
+                jnp.zeros((num_check_points,len(self.metrics)))
                 }
         history_id = 0
 
@@ -160,6 +162,7 @@ class GCNModel:
 
         check_point_gap = num_iters / num_check_points
 
+        # for iter_id in range(num_iters):
         for iter_id in tqdm(range(num_iters), desc="Training", total=num_iters):
 
             loss, gcn, opt_state = self._update_step(
@@ -171,6 +174,8 @@ class GCNModel:
                 metric_vals = [m(output) for m in self.metrics]
                 history["iter_ids"] = history["iter_ids"].at[history_id].set(iter_id)
                 history["loss_vals"] = history["loss_vals"].at[history_id].set(loss)
+
+                history["metric_vals"] = history["metric_vals"].at[history_id,:].set(metric_vals)
                 history_id += 1
                 print(f"Iter: {iter_id} | Loss: {loss:.2e} | Metrics {metric_vals}")
 
