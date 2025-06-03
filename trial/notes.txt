@@ -2,3 +2,69 @@ Feb 2: GCN example did not work as well as expected
 Works good for 4X4 grid
 I ran it for a grid of 16X16 and 32X32
 It sort of worked for the top right corner for 16X16
+
+# Apr 16 Run 1
+
+points: 6 X 6
+
+num_points,
+gcn_layers = [1] + [40]*3 + [1],
+iters_per_fit = 2000,
+# iters_per_fit = 9500,
+num_fits = 1,
+learning_rate = 0.0005,
+output_dir = "apr14/"
+
+Training time:  9.807009935379028
+gcn rel l2 error:  0.011872224
+gcn l inf error:  0.004840821
+fem rel l2 error:  0.011869792
+fem l inf error:  0.0048000216
+
+# Apr 16 Run 2
+
+points: 12 X 12
+
+gcn_layers = [1] + [40]*3 + [1],
+iters_per_fit = 9500,
+num_fits = 1,
+learning_rate = 0.0005,
+output_dir = "apr14/"
+
+Training time:  46.53107237815857
+gcn rel l2 error:  0.003290879
+gcn l inf error:  0.0010685399
+fem rel l2 error:  0.0032727327
+fem l inf error:  0.0010255799
+
+# May 4 12 X 12
+
+gcn_layers = [1] + [30]*3 + [1],
+iters_per_fit = 250000,
+# iters_per_fit = 9500,
+num_fits = 1,
+learning_rate = 0.001,
+output_dir = "may1/"
+
+Training time:  1577.14799284935
+gcn rel l2 error:  0.1281995
+gcn l inf error:  0.2786852
+fem rel l2 error:  0.12836343
+fem l inf error:  0.27669618
+python gcn_poisson_2d_int.py  1751.17s user 30.78s system 111% cpu 26:35.38 total
+
+# May 4 24 X 24
+
+gcn_layers = [1] + [40]*3 + [1],
+iters_per_fit = 250000,
+# iters_per_fit = 9500,
+num_fits = 1,
+learning_rate = 0.0001,
+output_dir = "may4/"
+
+Training time:  3350.023721218109
+gcn rel l2 error:  0.02986173
+gcn l inf error:  0.08323604
+fem rel l2 error:  0.02368699
+fem l inf error:  0.062558025
+python gcn_poisson_2d_int.py 24  11435.67s user 295.91s system 347% cpu 56:12.03 total
