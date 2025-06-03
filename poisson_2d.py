@@ -19,13 +19,15 @@ def u(x,y):
     # return jnp.where(y == 1, 1, 0)
     # return jnp.sin(jnp.pi*x)*jnp.sin(jnp.pi*y)
     # return x**2*y**2
-    return x*y
+    # return x*y
+    return 0.25*(1 - x*x - y*y)
 
 def f(x,y):
     # return 0
     # return 2*(jnp.pi)**2*jnp.sin(jnp.pi*x)*jnp.sin(jnp.pi*y)
     # return -2*(x**2 + y**2)
-    return 0
+    # return 0
+    return 1
 
 try:
     num_points = int(sys.argv[1])
