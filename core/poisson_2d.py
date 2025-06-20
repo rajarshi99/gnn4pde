@@ -100,7 +100,7 @@ class Poisson_2d:
         self.clock_on("Forming K and f the global quantities")
         K_glob = np.zeros((self.n_unknown,self.n_unknown))
         K_known = np.zeros((self.n_unknown,self.n_known))
-        f_glob = np.zeros(self.n_unknown)
+        f_force = np.zeros(self.n_unknown)
 
         # Explain and change names maybe
         K_glob_sparse = {
@@ -126,11 +126,12 @@ class Poisson_2d:
                     K_glob_sparse["ind"].append([v_id,u_id])
                     K_glob_sparse["val"].append(val)
             val = np.sum(np.array(f_glob_dict[v_id])).item()
-            f_glob = f_glob.at[v_ind].set(val)
+            f_force = f_force.at[v_ind].set(val)
             f_glob_sparse["ind"].append(v_id)
             f_glob_sparse["val"].append(val)
 
-        f_glob -= np.dot(K_known,self.u_known)
+        f_bound = np.dot(K_known,self.u_known)
+        f_glob = f_force - f_bound
         self.clock_off()
 
         self.K_glob_dict = K_glob_dict
@@ -141,7 +142,22 @@ class Poisson_2d:
 
         self.K_glob = K_glob
         self.f_glob = f_glob
+
+        self.f_force = f_force
+        self.f_bound = f_bound
+
         return K_glob, f_glob
+
+    def get_K_f1_f2(self):
+        """
+        Returns K, f1 and f2 where
+        K is the stiffness matrix ndof X ndof,
+        f1 is the forcing vector
+        f2 is the forcing due to Dirichlet boundary
+        (So that we have K u = f1 - f2 to solve)
+        """
+        self.get_K_f()
+        return self.K_glob, self.f_force, self.f_bound
 
     def get_u_fem(self):
         """
