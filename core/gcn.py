@@ -177,7 +177,7 @@ class GCNModel:
 
                 history["metric_vals"] = history["metric_vals"].at[history_id,:].set(metric_vals)
                 history_id += 1
-                print(f"Iter: {iter_id} | Loss: {loss:.2e} | Metrics {metric_vals}")
+                # print(f"Iter: {iter_id} | Loss: {loss:.2e} | Metrics {metric_vals}")
 
         return gcn, history
 
