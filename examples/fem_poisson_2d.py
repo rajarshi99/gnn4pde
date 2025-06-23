@@ -34,7 +34,7 @@ try:
 except:
     num_points = 32
 
-output_dir = "trial/"                           # folder to save the plots 
+output_dir = "output/"                           # folder to save the plots 
 
 x_1d = jnp.linspace(-1,1,num_points, dtype=jnp.float32)
 y_1d = jnp.linspace(-1,1,num_points, dtype=jnp.float32)
@@ -46,7 +46,7 @@ y = y.flatten()
 domain = {'vertices' : jnp.column_stack((x,y))}
 for key, val in tr.triangulate(domain).items():
     domain[key] = val
-    print(key)
+    print(key, val.shape)
 
 p_2d = Poisson_2d(domain, u, f)
 
@@ -56,7 +56,9 @@ u_sol = p_2d.sol_FEM()
 p_2d.plot_on_mesh(u_sol, f"FEM solution {num_points}", f"{output_dir}{num_points}_u_fem.png")
 p_2d.plot_on_mesh(u_exct - u_sol, f"Exact solution - FEM solution {num_points}", f"{output_dir}{num_points}_u_err.png")
 
-print(p_2d.time_logs)
+print("Time logs")
+for time_log in p_2d.time_logs:
+    print(time_log)
 
 res = jnp.dot(p_2d.K_glob,p_2d.u_unknown) - p_2d.f_glob
-print(jnp.sum(res**2))
+print("Residual 2 norm", jnp.linalg.norm(res))

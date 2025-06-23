@@ -1,0 +1,9 @@
+vertices (1024, 2)
+vertex_markers (1024, 1)
+triangles (1922, 3)
+Time logs
+[1.9561777114868164, 'Forming K and f as dict']
+[8.926269292831421, 'Forming K and f the global quantities']
+[0.19835901260375977, 'Calling linear solver']
+[0.11464142799377441, 'Assembling u_sol']
+Residual 2 norm 1.2854299e-06
