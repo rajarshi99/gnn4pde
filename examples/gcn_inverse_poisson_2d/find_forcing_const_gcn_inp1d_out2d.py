@@ -1,6 +1,6 @@
 """
 Inverse Poisson problem: -laplacian(u)(x,y) = f
-Find u(x,y) and unknown parameter f which defines the forcing
+Find u(x,y) and unknown constant f given one extra data point
 Method of manufacture soution using message passing by GCN
 
 Here we define
@@ -27,29 +27,28 @@ r1 = 10
 def u(x,y):
     # return jnp.where(y == 1, 1, 0)
     # return jnp.sin(jnp.pi*x)*jnp.sin(jnp.pi*y)
+    # return x**2*y**2
     # return x*y
-    # return 0.25*(1 - x*x - y*y)
+    return 1.2*0.25*(1 - x*x - y*y)
     # return (0.1*jnp.sin(omegax*x) + jnp.tanh(r1*x)) * jnp.sin(omegay*(y))
-    return 0.5*x**2 + 0.5*y**2
 
 def f(x,y):
     # return 0
     # return 2*(jnp.pi)**2*jnp.sin(jnp.pi*x)*jnp.sin(jnp.pi*y)
     # return -2*(x**2 + y**2)
     # return 0
-    # return 1
+    return 1.2
     # gtemp = (-0.1*(omegax**2)*jnp.sin(omegax*x) - (2*r1**2)*(jnp.tanh(r1*x))/((jnp.cosh(r1*x))**2))*jnp.sin(omegay*(y))\
             # +(0.1*jnp.sin(omegax*x) + jnp.tanh(r1*x)) * (-omegay**2 * jnp.sin(omegay*(y)) )
     # return -gtemp
-    return -2
 
 def f_guess(x,y):
-    return -1.8
+    return 1
 
 def main(
             num_points,
             u = u,
-            f = f,
+            f_guess = f_guess,
             gcn_layers = [1, 10, 10, 2],
             num_fits = 10,
             iters_per_fit = 100,
@@ -68,9 +67,8 @@ def main(
     for key, val in tr.triangulate(domain).items():
         domain[key] = val
 
-    data_selection_key, key_for_generating_random_numbers = jax.random.split(key_for_generating_random_numbers)
     interior_node_indices = jnp.where(domain["vertex_markers"] == 0)[0]
-    random_interior_node_index = jax.random.choice(data_selection_key, interior_node_indices)
+    random_interior_node_index = int(interior_node_indices.shape[0]/2)
     domain["vertex_markers"][random_interior_node_index] = 1 # Somehow this a numpy not jax numpy
 
     p_2d = Poisson_2d(domain, u, f_guess)
@@ -82,7 +80,7 @@ def main(
 
 # Gloabal stiffness matrix and consistent load vector
     K_mat, f_force, f_bound = p_2d.get_K_f1_f2()
-    Kf1f2 = jnp.hstack((K_mat,f_force.reshape(-1,1),f_bound.reshape(-1,1)))
+    Kf1f2 = [K_mat, f_force.reshape(-1,1), f_bound.reshape(-1,1)]
 
 # Adjacency matrix using the stiffness matrix
     A = jnp.zeros_like(K_mat, dtype=jnp.int8)
@@ -104,15 +102,16 @@ def main(
               [jnp.tanh] * (len(gcn_layers)-2) + [lambda x: x],
               model_key)
 
-# Loss is typically a func of output and target
     def f_eval_fn(output):
         f_term = jnp.mean(output[:,1:2])
         return f_term
 
+# Loss is typically a func of output and target
     def loss_fn(output, Kf1f2):
-        u_gcn = output[:,0:1]
-        f_term = f_eval_fn(output)
-        res = Kf1f2[:,:-2] @ u_gcn + Kf1f2[:,-1:] - f_term * Kf1f2[:,-2:-1] 
+        K_mat, f_force, f_bound = Kf1f2
+        u = output[:,0:1]
+        f_val = f_eval_fn(output)
+        res = (K_mat @ u) - f_val* f_force + f_bound
         return jnp.sum(res*res)
 
     vert_unknown_list = jnp.array(p_2d.vert_unknown_list)
@@ -261,7 +260,7 @@ def main(
     print("Interior data point", domain["vertices"][random_interior_node_index])
     print("Node index", random_interior_node_index)
 
-    return history_list, domain
+    return history_list
 
 if __name__ == "__main__":
     try:
@@ -272,12 +271,12 @@ if __name__ == "__main__":
     plt.rcParams['font.size'] = 18
     plt.rcParams['savefig.bbox'] = 'tight'
 
-    h_list, domain = main(
+    h_list = main(
             num_points,
-            gcn_layers = [1] + [40]*3 + [2],
-            iters_per_fit = 25000,
+            gcn_layers = [1] + [60]*3 + [2],
+            iters_per_fit = 15000,
             # iters_per_fit = 9500,
             num_fits = 1,
-            learning_rate = 0.005,
-            output_dir = "jun19/"
+            learning_rate = 0.0001,
+            output_dir = "output/"
             )
