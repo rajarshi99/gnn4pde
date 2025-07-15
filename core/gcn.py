@@ -128,7 +128,7 @@ class GCNModel:
         features: jnp.ndarray,
         adjacency_matrix: jnp.ndarray,
         degree_array: jnp.ndarray,
-        target: jnp.ndarray,
+        target,
         learning_rate: float,
         num_iters: int = 10,
         num_check_points: int = 5,
@@ -140,7 +140,7 @@ class GCNModel:
             features: jnp.ndarray,
             adjacency_matrix: jnp.ndarray,
             degree_array: jnp.ndarray,
-            target: jnp.ndarray,
+            target,
             learning_rate: Parameter of the gradient based optimisation method
             num_iters: Number of iterations of the gradient based optimisation method
             num_check_points
@@ -188,7 +188,7 @@ class GCNModel:
         features: jnp.ndarray,
         adjacency_matrix: jnp.ndarray,
         degree_array: jnp.ndarray,
-        target: jnp.ndarray,
+        target,
         opt_state,
     ):
         """
@@ -225,7 +225,7 @@ class GCNModel:
         features: jnp.ndarray,
         adjacency_matrix,
         degree_array,
-        target: jnp.ndarray,
+        target,
     ):
         """
         Compute loss for the given input data.
@@ -236,7 +236,7 @@ class GCNModel:
             features: Input feature vectors
             adjacency_matrix,
             degree_array,
-            target: jnp.ndarray
+            target
 
         Returns:
             jnp.ndarray: Loss value.
