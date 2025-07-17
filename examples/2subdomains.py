@@ -12,6 +12,8 @@ import jax.numpy as jnp
 import triangle as tr
 
 from core.poisson_2d import Poisson_2d
+from jax.scipy.linalg import solve
+
 
 import sys
 
@@ -48,9 +50,16 @@ A, b = p_2d.get_K_f()
 vert_list = jnp.array(p_2d.vert_unknown_list)
 
 vert_x_coords = domain["vertices"][vert_list, 0]
+
 vert_interface = jnp.where(vert_x_coords == 0)[0]
 vert_subdom1 = jnp.where(vert_x_coords < 0)[0]
 vert_subdom2 = jnp.where(vert_x_coords > 0)[0]
+
+# print("vert x coords: \n", vert_x_coords)
+# print("shape: \n", vert_x_coords.shape)
+# print("vert_interface = ", vert_interface)
+# print("vert_subdom1: ", vert_subdom1)
+# print("vert_subdom2: ", vert_subdom2)
 
 B1 = A[vert_subdom1[:,None], vert_subdom1[None,:]]
 B2 = A[vert_subdom2[:,None], vert_subdom2[None,:]]
@@ -62,4 +71,43 @@ F1 = A[vert_interface[:,None], vert_subdom1[None,:]]
 F2 = A[vert_interface[:,None], vert_subdom2[None,:]]
 
 f1 = b[vert_subdom1]
-f1 = b[vert_subdom2]
+f2 = b[vert_subdom2]
+
+C = A[vert_interface[:,None], vert_interface[None,:]]
+
+G = b[vert_interface]
+
+E1_ = solve(B1, E1)
+E2_ = solve(B2, E2)
+
+F1_E1_ = F1 @ E1_
+F2_E2_ = F2 @ E2_
+
+S = C - (F1_E1_ + F2_E2_)
+
+B1_inv_f1 = solve(B1, f1)
+B2_inv_f2 = solve(B2, f2)
+
+G_ = G - (F1 @ B1_inv_f1 + F2 @ B2_inv_f2)
+
+y = solve(S, G_)
+
+x1 = solve(B1, f1 - E1 @ y)
+x2 = solve(B2, f2 - E2 @ y)
+
+sol_unknown = jnp.zeros_like(b)
+sol_unknown = sol_unknown.at[vert_subdom1].set(x1)
+sol_unknown = sol_unknown.at[vert_subdom2].set(x2)
+sol_unknown = sol_unknown.at[vert_interface].set(y)
+
+full_sol = jnp.zeros((domain["vertices"].shape[0],), dtype=jnp.float32)
+full_sol = full_sol.at[vert_list].set(sol_unknown)
+
+coords = domain["vertices"]
+x_all, y_all = coords[:,0], coords[:,1]
+u_exact = u(x_all, y_all)
+
+error = jnp.abs(full_sol - u_exact)
+l2_error = jnp.sqrt(jnp.sum(error**2) / len(error))
+
+print("L2 error:", l2_error)
