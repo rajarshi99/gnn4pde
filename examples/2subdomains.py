@@ -95,19 +95,16 @@ y = solve(S, G_)
 x1 = solve(B1, f1 - E1 @ y)
 x2 = solve(B2, f2 - E2 @ y)
 
-sol_unknown = jnp.zeros_like(b)
-sol_unknown = sol_unknown.at[vert_subdom1].set(x1)
-sol_unknown = sol_unknown.at[vert_subdom2].set(x2)
-sol_unknown = sol_unknown.at[vert_interface].set(y)
-
-full_sol = jnp.zeros((domain["vertices"].shape[0],), dtype=jnp.float32)
-full_sol = full_sol.at[vert_list].set(sol_unknown)
-
 coords = domain["vertices"]
 x_all, y_all = coords[:,0], coords[:,1]
 u_exact = u(x_all, y_all)
 
-error = jnp.abs(full_sol - u_exact)
+u_sol = u_exact # Somehow x_all, y_all, u_exact are numpy.ndarray
+u_sol[vert_subdom1] = x1
+u_sol[vert_subdom2] = x2
+u_sol[vert_interface] = y
+
+error = jnp.abs(u_sol - u_exact)
 l2_error = jnp.sqrt(jnp.sum(error**2) / len(error))
 
 print("L2 error:", l2_error)
