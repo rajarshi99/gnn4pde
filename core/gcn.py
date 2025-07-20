@@ -244,3 +244,69 @@ class GCNModel:
         return self.loss_fn(
             gcn(features, adjacency_matrix, degree_array), target
         ).mean()
+
+class ChebyshevGCN(eqx.Module):
+    """
+    PI-GGN Style GCN
+    """
+    num_layers: int
+    poly_order: int
+    theta_list: list
+    b_list: list
+
+    activations: list
+
+    def __init__(self, layers, activations, num_nodes, key, poly_order = 10):
+        """
+        Initialize a Chebyshev GCN instance with random initial parameters
+        and trainable bias vector for fixed num of nodes graph
+
+        Inputs:
+            layers: a python list indicating the size of the node embeddings at each layer
+            activations: a python list of activation functions
+            key: to generate random numbers for initialising the W and B matrices
+        """
+
+        self.num_layers = len(layers)
+        self.poly_order = poly_order
+        self.theta_list = []
+        self.b_list = []
+
+        self.activations = activations
+
+        for i in range(self.num_layers - 1):
+            b_key, W_key, key = jax.random.split(key, num=3)
+            W_key = jax.random.split(W_key, num=poly_order)
+
+            b = jax.random.normal(b_key, (num_nodes, layers[i + 1]))
+
+            W_list = []
+            for k in range(poly_order):
+                W = jax.random.normal(W_key[k], (layers[i], layers[i + 1]))
+                W_list.append(W)
+
+            self.theta_list.append(W_list)
+            self.b_list.append(b)
+
+    def __call__(self, X, adj_mat, degree):
+        """
+        Initialize the gcn model with network architecture and training parameters.
+
+        Args:
+            z: jnp array for which the i-th row is the i-th node embedding
+            adj_mat: the adjacency matrix. Ideally it should be a sparse matrix
+            degree: jnp array where the i-th element is the degree of the i-th node
+
+        Output:
+            node embeddings of the output
+        """
+
+        # activation = jnp.tanh
+        # for W,B in zip(self.W_list,self.B_list):
+        lap_hat_mat = - jnp.diagflat(1.0 / degree) @ adj_mat
+        for activation, W_list, b in zip(self.activations, self.theta_list, self.b_list):
+            Z_list = [X, lap_hat_mat @ X]
+            for k in range(2, self.poly_order):
+                Z_list.append((2 * lap_hat_mat @ Z_list[k-1]) - Z_list[k-2])
+            X = activation(jnp.sum(jnp.stack([Z @ W for Z,W in zip(Z_list,W_list)]), axis=0) + b)
+        return X

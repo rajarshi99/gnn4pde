@@ -1,6 +1,6 @@
 """
 Poisson problem: -laplacian(u)(x,y) = f(x,y)
-Method of manufacture soution using message passing by GCN
+Method of manufacture soution using message passing by Chebyshev GCN
 
 Here we define
 - u (unknown function)
@@ -10,7 +10,7 @@ Here we define
 import jax
 import jax.numpy as jnp
 
-from core.gcn import GCN, GCNModel
+from core.gcn import ChebyshevGCN, GCNModel
 from core.poisson_2d import Poisson_2d
 
 import triangle as tr
@@ -90,9 +90,10 @@ def main(
 # Other activations are tanh
     model_key, key_for_generating_random_numbers = \
             jax.random.split(key_for_generating_random_numbers)
-    gcn = GCN(gcn_layers,
-              [jnp.tanh] * (len(gcn_layers)-2) + [lambda x: x],
-              model_key)
+    gcn = ChebyshevGCN(gcn_layers,
+                       [jnp.tanh] * (len(gcn_layers)-2) + [lambda x: x],
+                       num_nodes=n_unknown,
+                       key=model_key)
 
 # Loss is typically a func of output and target
     def loss_fn(u, Kf):
@@ -245,5 +246,5 @@ if __name__ == "__main__":
             iters_per_fit = 10000,
             num_fits = 1,
             learning_rate = 0.001,
-            output_dir = "jun17_gcn/"
+            output_dir = "jun17_cgcn/"
             )
