@@ -99,7 +99,7 @@ coords = domain["vertices"]
 x_all, y_all = coords[:,0], coords[:,1]
 u_exact = u(x_all, y_all)
 
-u_sol = u_exact # Somehow x_all, y_all, u_exact are numpy.ndarray
+u_sol = u_exact.copy() # Somehow x_all, y_all, u_exact are numpy.ndarray
 u_sol[vert_subdom1] = x1
 u_sol[vert_subdom2] = x2
 u_sol[vert_interface] = y
