@@ -46,9 +46,12 @@ def f_guess(x,y):
     return 1
 
 class ChebyshevGCNGuessForcing(ChebyshevGCN):
+    """
+    An extra trainable parameter over the parent class
+    """
     f_val: jnp.ndarray
 
-    def __init__(self, layers, activations, num_nodes, key, f_val = 1.5):
+    def __init__(self, layers, activations, num_nodes, key, f_val = 1.0):
         super().__init__(layers, activations, num_nodes, key)
         self.f_val = jnp.array([f_val])
 
@@ -117,9 +120,10 @@ def main(
 
 # Loss is typically a func of output and target
     def loss_fn(output, Kf1f2):
-        K_mat, f_force, f_bound = Kf1f2
+        K_mat, f_force, f_data = Kf1f2
         u, f_val = output
-        res = (K_mat @ u) - f_val* f_force + f_bound
+        res = (K_mat @ u) - f_val* f_force + f_data
+        # We have to multiply the second term with the degree vector
         return jnp.sum(res*res)
 
     vert_unknown_list = jnp.array(p_2d.vert_unknown_list)
@@ -285,7 +289,7 @@ if __name__ == "__main__":
     h_list = main(
             num_points,
             gcn_layers = [1] + [30]*7 + [1],
-            iters_per_fit = 50000,
+            iters_per_fit = 15000,
             # iters_per_fit = 6500,
             num_fits = 1,
             learning_rate = 0.0001,
