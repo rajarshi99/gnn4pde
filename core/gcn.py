@@ -76,7 +76,9 @@ class GCN(eqx.Module):
 
         for i in range(self.num_layers - 1):
             weights_key, bias_key, key = jax.random.split(key, num=3)
-            W = jax.random.normal(weights_key, (layers[i], layers[i + 1]))
+            # W = jax.random.normal(weights_key, (layers[i], layers[i + 1]))
+            glorot_init_const = jnp.sqrt(6/(layers[i] + layers[i+1]))
+            W = glorot_init_const * jax.random.uniform(weights_key, (layers[i], layers[i + 1]))
             B = jax.random.normal(bias_key, (layers[i], layers[i + 1]))
 
             self.W_list.append(W)
