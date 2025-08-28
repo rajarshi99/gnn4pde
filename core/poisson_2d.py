@@ -211,6 +211,11 @@ class Poisson_2d:
             h_vals[e_id] = np.max(lens)
         return h_vals
 
+    def get_mesh_plt(self, u_inp):
+        cplot = plt.tricontourf(self.triang, u_inp, cmap = "jet", levels = 200)
+        plt.colorbar(cplot)
+        return plt
+
     def plot_on_mesh(self, u_inp, title = " ", fname = None, plot_with_lines = False):
         cplot = plt.tricontourf(self.triang, u_inp, cmap = "jet", levels = 200)
         plt.colorbar(cplot)
