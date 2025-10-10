@@ -42,7 +42,7 @@ hyper_params = {
         "lr_init": [5e-2, 5e-3],
         "gcn_layers": [10, 9, 8],
         "gcn_neurons": [100, 80],
-        "internal_data_points": [16, 8]
+        "internal_data_points": [2, 1]
         }
 
 # Create an iterator over the hyper parameters
@@ -64,7 +64,7 @@ for params in param_iterator:
     path = Path(output_dir)
     path.mkdir(parents=True, exist_ok=True)
 
-    iter_ids, loss_vals, metric_vals, metric_col_names = main(
+    iter_ids, loss_vals, metric_vals, metric_col_names, init_time, train_time = main(
             num_points = param_dict["num_points"],
             u = u, f_guess = f_guess,
             gcn_layers =[1] + param_dict["gcn_layers"]*[param_dict["gcn_neurons"]] + [1],
@@ -78,6 +78,8 @@ for params in param_iterator:
     print(iter_ids.shape, loss_vals.shape, metric_vals.shape, metric_col_names)
 
     expt_details = {**param_dict,
+                    "init_time": init_time,
+                    "train_time": train_time,
                     "loss_vals": loss_vals,
                     "metric_vals": metric_vals,
                     }
