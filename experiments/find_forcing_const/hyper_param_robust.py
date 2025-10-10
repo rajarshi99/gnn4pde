@@ -72,6 +72,7 @@ for params in param_iterator:
             num_steps = 1,
             lr_init = param_dict["lr_init"],
             lr_final = 1e-4,
+            num_internal_data_points = param_dict["internal_data_points"],
             output_dir = output_dir
             )
 
@@ -80,8 +81,7 @@ for params in param_iterator:
     expt_details = {**param_dict,
                     "init_time": init_time,
                     "train_time": train_time,
-                    "loss_vals": loss_vals,
-                    "metric_vals": metric_vals,
+                    "output_dir": output_dir
                     }
 
     expt_details["loss_mean1K"] = loss_vals[-1000:].mean()
@@ -89,10 +89,11 @@ for params in param_iterator:
     expt_details["loss_stdk1K"] = loss_vals[-1000:].std()
     expt_details["loss_stdk2K"] = loss_vals[-2000:].std()
     for col_id,metric_col_name in enumerate(metric_col_names):
-        expt_details[metric_col_name + "_mean1K"] = metric_vals[col_id,-1000:].mean()
-        expt_details[metric_col_name + "_std1K"] = metric_vals[col_id,-1000:].std()
-        expt_details[metric_col_name + "_mean2K"] = metric_vals[col_id,-2000:].mean()
-        expt_details[metric_col_name + "_std2K"] = metric_vals[col_id,-2000:].std()
+        print(metric_col_name, col_id, metric_vals.shape, metric_vals[0, -3:, col_id])
+        expt_details[metric_col_name + "_mean1K"] = metric_vals[0, -1000:, col_id].mean()
+        expt_details[metric_col_name + "_std1K"] = metric_vals[0, -1000:, col_id].std()
+        expt_details[metric_col_name + "_mean2K"] = metric_vals[0, -2000:, col_id].mean()
+        expt_details[metric_col_name + "_std2K"] = metric_vals[0, -2000:, col_id].std()
 
     expt_df = pd.concat([expt_df, pd.DataFrame([expt_details])], ignore_index=True)
 
