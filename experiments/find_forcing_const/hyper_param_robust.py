@@ -29,6 +29,7 @@ def main(
             num_steps = 1,
             lr_init = 0.001,
             lr_final = 0.0001,
+            num_internal_data_points = 2,
             output_dir = "trial/"
             ):
           """, file=file)
