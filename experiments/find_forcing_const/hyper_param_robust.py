@@ -30,7 +30,8 @@ def main(
             lr_init = 0.001,
             lr_final = 0.0001,
             num_internal_data_points = 2,
-            output_dir = "trial/"
+            output_dir = "trial/",
+            input_prng_key = 42
             ):
           """, file=file)
 
@@ -43,7 +44,8 @@ hyper_params = {
         "lr_init": [5e-2, 5e-3],
         "gcn_layers": [10, 9, 8],
         "gcn_neurons": [100, 80],
-        "internal_data_points": [2, 1]
+        "internal_data_points": [2, 1],
+        "input_prng_key": [42, 69, 99, 1729, 2025]
         }
 
 # Create an iterator over the hyper parameters
@@ -74,7 +76,8 @@ for params in param_iterator:
             lr_init = param_dict["lr_init"],
             lr_final = 1e-4,
             num_internal_data_points = param_dict["internal_data_points"],
-            output_dir = output_dir
+            output_dir = output_dir,
+            input_prng_key = param_dict["input_prng_key"]
             )
 
     print(iter_ids.shape, loss_vals.shape, metric_vals.shape, metric_col_names)

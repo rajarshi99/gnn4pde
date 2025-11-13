@@ -70,9 +70,10 @@ def main(
             lr_init = 0.001,
             lr_final = 0.0001,
             num_internal_data_points = 2,
-            output_dir = "trial/"
+            output_dir = "trial/",
+            input_prng_key = 42
             ):
-    key_for_generating_random_numbers = jax.random.PRNGKey(42)
+    key_for_generating_random_numbers = jax.random.PRNGKey(input_prng_key)
 
     x_1d = jnp.linspace(-1,1,num_points, dtype=jnp.float32)
     y_1d = jnp.linspace(-1,1,num_points, dtype=jnp.float32)
