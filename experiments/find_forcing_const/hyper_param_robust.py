@@ -16,9 +16,15 @@ def u(x,y):
 def f_guess(x,y):
     return 1
 
+# Create new csv log file if it already exists
+run_id = 1
+while Path(fname_csv).exists():
+    fname_csv = f"{fname}_{run_id}.csv"
+    run_id += 1
+
 with open(fname_txt, "w") as file:
     print("Running script name:", Path(__file__), file=file)
-    # print("Expt specific logs", fname_csv, fname_html, file=file)
+    print("Log @", fname_csv, file=file)
     print(""" Part of main when run
 def main(
             num_points,
@@ -34,9 +40,6 @@ def main(
             input_prng_key = 42
             ):
           """, file=file)
-
-with open(fname_csv, "a") as file:
-    print("num_points,iters_per_fit,lr_init,rel_l2_err,path", file=file)
 
 expt_id = 0
 hyper_params = {
@@ -65,7 +68,10 @@ for params in param_iterator:
 
     output_dir = f"{fname}_out/expt{expt_id:03d}/"
     path = Path(output_dir)
-    path.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        print("Path already exists. Avoiding overwrite. SKIP", path)
+        continue
+    path.mkdir(parents=True)
 
     iter_ids, loss_vals, metric_vals, metric_col_names, init_time, train_time = main(
             num_points = param_dict["num_points"],
