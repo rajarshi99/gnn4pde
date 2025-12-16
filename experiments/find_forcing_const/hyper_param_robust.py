@@ -77,7 +77,7 @@ for params in param_iterator:
             num_points = param_dict["num_points"],
             u = u, f_guess = f_guess,
             gcn_layers =[1] + param_dict["gcn_layers"]*[param_dict["gcn_neurons"]] + [1],
-            num_iters = 5_000, # Change later
+            num_iters = 50_000, # Change later
             num_steps = 1,
             lr_init = param_dict["lr_init"],
             lr_final = 1e-4,
