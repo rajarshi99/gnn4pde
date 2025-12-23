@@ -20,14 +20,14 @@ def u(x,y):
     # return jnp.sin(jnp.pi*x)*jnp.sin(jnp.pi*y)
     # return x**2*y**2
     # return x*y
-    return 0.25*(1 - x*x - y*y)
+    return 0.3*(1 - x*x - y*y)
 
 def f(x,y):
     # return 0
     # return 2*(jnp.pi)**2*jnp.sin(jnp.pi*x)*jnp.sin(jnp.pi*y)
     # return -2*(x**2 + y**2)
     # return 0
-    return 1
+    return 1.2
 
 try:
     num_points = int(sys.argv[1])
@@ -50,11 +50,13 @@ for key, val in tr.triangulate(domain).items():
 
 p_2d = Poisson_2d(domain, u, f)
 
+K,f = p_2d.get_K_f()
+
 u_exct = u(x,y)
-p_2d.plot_on_mesh(u_exct, f"Exact solution {num_points}", f"{output_dir}{num_points}_u_exct.png")
+p_2d.plot_on_mesh(u_exct, "", f"{output_dir}{num_points}_u_exct.png")
 u_sol = p_2d.sol_FEM()
-p_2d.plot_on_mesh(u_sol, f"FEM solution {num_points}", f"{output_dir}{num_points}_u_fem.png")
-p_2d.plot_on_mesh(u_exct - u_sol, f"Exact solution - FEM solution {num_points}", f"{output_dir}{num_points}_u_err.png")
+p_2d.plot_on_mesh(u_sol, "", f"{output_dir}{num_points}_u_fem.png", plot_with_lines=True)
+p_2d.plot_on_mesh(u_exct - u_sol, "", f"{output_dir}{num_points}_u_err.png")
 
 print("Time logs")
 for time_log in p_2d.time_logs:
