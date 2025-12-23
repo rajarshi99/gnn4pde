@@ -45,7 +45,7 @@ def main(
             modes1=5,
             modes2=5,
             width=5,
-            activation= jnp.tanh,
+            activation=jax.nn.relu,
             n_blocks=2,
             num_iters = 100,
             learning_rate = 5e-2,
@@ -58,9 +58,10 @@ def main(
 
     x_1d = jnp.linspace(-1,1,num_points, dtype=jnp.float32)
     y_1d = jnp.linspace(-1,1,num_points, dtype=jnp.float32)
-    x,y = jnp.meshgrid(x_1d,y_1d)
-    x = x.flatten()
-    y = y.flatten()
+    X,Y = jnp.meshgrid(x_1d,y_1d)
+    xy_sdf_mesh = jnp.stack([X, Y, u(X,Y)])
+    x = X.flatten()
+    y = Y.flatten()
 
     domain = {'vertices' : jnp.column_stack((x,y))}
     for key, val in tr.triangulate(domain).items():
@@ -68,13 +69,13 @@ def main(
 
     p_2d = Poisson_2d(domain, u, f)
 
-    u_exct = u(x,y)
-    p_2d.plot_on_mesh(u_exct,
-                      f"Exact solution {num_points}",
-                      f"{output_dir}{num_points}_u_exct.png")
-    p_2d.plot_on_mesh(u_exct,
-                      "",
-                      f"{output_dir}{num_points}_u_exct.pgf")
+    u_exct = u(X,Y)
+    plt.pcolormesh(X, Y, u_exct, cmap="jet")
+    plt.colorbar()
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.savefig(f"{output_dir}{num_points}_u_exct.png")
+    plt.close()
 
     # Gloabal stiffness matrix and consistent load vector
     K_mat, f_vec = p_2d.get_K_f()
@@ -82,12 +83,12 @@ def main(
     # EXPLAIN
     Kf = jnp.hstack((K_mat,f_vec.reshape(-1,1)))
 
-    # Input are the coordinates the shape is num_unknowns X 2
+    # Input are the coordinates the shape is num_unknowns X num_unknowns
     x_int = x_1d[1:-1]
     y_int = y_1d[1:-1]
-    x_int_mesh, y_int_mesh = jnp.meshgrid(x_int,y_int)
-    sdf_int_mesh = sdf(x_int_mesh, y_int_mesh)
-    xy_sdf_int_mesh = jnp.stack([x_int_mesh, y_int_mesh, sdf_int_mesh])
+    X_int_mesh, Y_int_mesh = jnp.meshgrid(x_int,y_int)
+    sdf_int_mesh = sdf(X_int_mesh, Y_int_mesh)
+    xy_sdf_int_mesh = jnp.stack([X_int_mesh, Y_int_mesh, sdf_int_mesh])
 
     model_key, key_for_generating_random_numbers = \
             jax.random.split(key_for_generating_random_numbers)
@@ -113,25 +114,31 @@ def main(
     model = FNO2dModel(fno, loss_fn)
     fno, history = model.fit(xy_sdf_int_mesh, Kf,
                              learning_rate=learning_rate,
-                             num_iters=num_iters)
+                             num_iters=num_iters,
+                             num_check_points=num_iters)
 
-    return fno(xy_sdf_int_mesh)
+    u_fno = fno(xy_sdf_mesh)[0]
+    plt.pcolormesh(X, Y, u_fno, cmap="jet")
+    plt.colorbar()
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.savefig(f"{output_dir}{num_points}_u_fno.png")
+    plt.close()
 
-"""
-    jnp.savez(f"{output_dir}details.npz",
-              vertices = domain['vertices'],
-              triangles = domain['triangles'],
-              vertex_markers = domain['vertex_markers'],
-              u_fno = u_fno,
-              u_exct = u_exct,
-              u_fem = u_fem
-              )
+    u_err = jnp.abs(u_fno - u_exct)
+    plt.pcolormesh(X, Y, u_err, cmap="jet")
+    plt.colorbar()
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.savefig(f"{output_dir}{num_points}_u_err.png")
+    plt.close()
 
-    relative_l2_error = \
-            jnp.linalg.norm(u_fno - u_exct) / jnp.linalg.norm(u_exct)
-
-    return relative_l2_error
-"""
+    plt.plot(history["iter_ids"], history["loss_vals"])
+    plt.xlabel("iteration")
+    plt.ylabel("loss")
+    plt.yscale("log")
+    plt.savefig(f"{output_dir}{num_points}_loss.png")
+    plt.close()
 
 if __name__ == "__main__":
     try:
@@ -139,4 +146,4 @@ if __name__ == "__main__":
     except:
         num_points = 4
 
-    out = main(num_points, u, f, num_iters=100, learning_rate=5e-4, output_dir = "trial/")
+    out = main(num_points, u, f, num_iters=100000, learning_rate=5e-4, output_dir = "trial/")
