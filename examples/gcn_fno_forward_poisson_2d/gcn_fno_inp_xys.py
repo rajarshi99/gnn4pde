@@ -79,8 +79,8 @@ class GNIN(GCN):
         V = gcn_out[:,:self.N_lat_x] # Shape (N_in,N_lat_x)
         W = gcn_out[:,self.N_lat_x:] # Shape (N_in,N_lat_y)
         fno_inp_mat = V.T @ W
-        fno_out_mat = self.fno(fno_inp_mat)
-        return jnp.sum((V @ fno_out_mat) * W, axis=1, keepdims=True)
+        fno_out_mat = self.fno(fno_inp_mat.reshape(1,self.N_lat_x,self.N_lat_y))
+        return jnp.sum((V @ fno_out_mat[0]) * W, axis=1)
 
 def main(
             num_points,
@@ -118,11 +118,8 @@ def main(
 
     u_exct = u(x,y)
     p_2d.plot_on_mesh(u_exct,
-                      f"Exact solution {num_points}",
-                      f"{output_dir}{num_points}_u_exct.png")
-    p_2d.plot_on_mesh(u_exct,
                       "",
-                      f"{output_dir}{num_points}_u_exct.pgf")
+                      f"{output_dir}{num_points}_u_exct.png")
 
     # Gloabal stiffness matrix and consistent load vector
     K_mat, f_vec = p_2d.get_K_f()
@@ -133,7 +130,7 @@ def main(
     # Adjacency matrix for interior points
     A = jnp.zeros_like(K_mat, dtype=jnp.int8)
     A = A.at[jnp.nonzero(K_mat)].set(1)
-    d = A.sum(axis=0)
+    deg = A.sum(axis=0)
 
     # Input are the coordinates the shape is num_unknowns X 2
     vert_unknown_list = jnp.array(p_2d.vert_unknown_list)
@@ -162,35 +159,91 @@ def main(
     # Loss is typically a func of output and target
     def loss_fn(u, Kf):
         u = u.reshape(-1,1) # Change later
-        print(u.shape, Kf.shape)
         res = Kf[:,:-1] @ u - Kf[:,-1:]
         return jnp.sum(res*res)
 
-    return xys_inp, A, deg, gnin, loss_fn
+    u_exct_int = u_exct.at[vert_unknown_list].get()
+    def rel_l2_err_fn(u):
+        err = u.flatten() - u_exct_int.flatten()
+        return jnp.linalg.norm(err) / jnp.linalg.norm(u_exct)
 
-"""
-    # Training of the FNO
-    model = GCNModel(gnin, loss_fn) #, [rel_l2_err_fn, f_val_fn, penalty_fun])
+    # Training the GNIN
+    model = GCNModel(gnin, loss_fn, [rel_l2_err_fn])
     gnin, history = model.fit(xys_inp, A, deg, Kf,
                              learning_rate=learning_rate,
                              num_iters=num_iters,
                              num_check_points=num_iters)
-    u_gcn = gnin(xys_inp, A, deg)
+    u_gnin = gnin(xys_inp, A, deg)
+
+    u_gnin = p_2d.assemble_sol(u_gnin.reshape(-1))
+
+    p_2d.plot_on_mesh(u_gnin,
+                      "",
+                      f"{output_dir}{num_points}_u_gnin.png")
+    p_2d.plot_on_mesh(u_gnin,
+                      "",
+                      f"{output_dir}{num_points}_u_gnin(2).png",
+                      plot_with_lines = True)
+
+
+    u_fem = p_2d.get_u_fem()
+    p_2d.plot_on_mesh(u_fem,
+                      "",
+                      f"{output_dir}{num_points}_u_fem.png")
+
+    p_2d.plot_on_mesh(jnp.abs(u_exct - u_fem),
+                      "",
+                      f"{output_dir}{num_points}_u_fem_err.png")
+
+    p_2d.plot_on_mesh(jnp.abs(u_exct - u_gnin),
+                      "",
+                      f"{output_dir}{num_points}_u_gnin_err.png")
+
+    # Plot the loss history
+    iter_ids = history["iter_ids"]
+    loss_vals = history["loss_vals"]
+    plt.plot(iter_ids, loss_vals, color="k")
+    plt.xlabel("iteration number")
+    plt.ylabel("loss")
+    plt.yscale("log")
+    plt.savefig(f"{output_dir}{num_points}_loss_gnin.png")
+    plt.close()
+
+    # Scatter plot of loss vs error
+    rel_l2_err_vals = history["metric_vals"][:,0]
+    plt.scatter(loss_vals, rel_l2_err_vals, c=iter_ids, cmap='jet')
+    plt.xlabel("Loss")
+    plt.ylabel("Relative l2 loss")
+    plt.colorbar()
+    plt.grid()
+    plt.savefig(f"{output_dir}{num_points}_loss_err.png")
+    plt.close()
+
+    plt.scatter(loss_vals, rel_l2_err_vals, c=iter_ids, cmap='jet')
+    plt.xlabel("Loss")
+    plt.ylabel("Relative l2 loss")
+    plt.colorbar()
+    plt.grid()
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.savefig(f"{output_dir}{num_points}_loss_err_log.png")
+    plt.close()
 
     jnp.savez(f"{output_dir}details.npz",
               vertices = domain['vertices'],
               triangles = domain['triangles'],
               vertex_markers = domain['vertex_markers'],
-              u_fno = u_fno,
+              u_gnin = u_gnin,
               u_exct = u_exct,
-              u_fem = u_fem
+              u_fem = u_fem,
+              loss_vals = loss_vals,
+              rel_l2_err_vals = rel_l2_err_vals
               )
 
     relative_l2_error = \
-            jnp.linalg.norm(u_fno - u_exct) / jnp.linalg.norm(u_exct)
+            jnp.linalg.norm(u_gnin - u_exct) / jnp.linalg.norm(u_exct)
 
     return relative_l2_error
-"""
 
 if __name__ == "__main__":
     try:
@@ -198,4 +251,4 @@ if __name__ == "__main__":
     except:
         num_points = 4
 
-    out = main(num_points, u, f, num_iters=100, learning_rate=5e-4, output_dir = "trial/")
+    err = main(num_points, u, f, num_iters=100, learning_rate=5e-4, output_dir = "trial/")
