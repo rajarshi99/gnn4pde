@@ -105,6 +105,7 @@ def main(
             fno_n_blocks = 2,
             num_iters = 100,
             learning_rate = 5e-2,
+            num_internal_data_points = 2,
             output_dir = "trial/"
             ):
     key_for_generating_random_numbers = jax.random.PRNGKey(69)
@@ -128,9 +129,6 @@ def main(
     p_2d.plot_on_mesh(u_exct,
                       "",
                       f"{output_dir}{num_points}_u_exct.png")
-
-    # Gloabal stiffness matrix and consistent load vector
-    K_mat, f_vec = p_2d.get_K_f()
 
     # EXPLAIN
     K_mat, f_force, f_bound = p_2d.get_K_f1_f2()
@@ -167,7 +165,7 @@ def main(
             )
 
     data_node_selection_key, key_for_generating_random_numbers = jax.random.split(key_for_generating_random_numbers)
-    data_node_inds = jax.random.permutation(data_node_selection_key, jnp.arange(vert_unknown_list.shape[0]))[:5]
+    data_node_inds = jax.random.permutation(data_node_selection_key, jnp.arange(vert_unknown_list.shape[0]))[:num_internal_data_points]
     data_node_u_vals = u(xys_inp[data_node_inds,0], xys_inp[data_node_inds,1])
 
     def penalty_fun(output):
@@ -183,7 +181,7 @@ def main(
         res = (K_mat @ u) - (f_val * f_force) + f_data
         penalty = u[data_node_inds] - data_node_u_vals
         penalty = jnp.sum(penalty*penalty)/penalty.shape[0]
-        return jnp.sum(res*res)/res.shape[0] + (10**2)*penalty
+        return jnp.sum(res*res)/res.shape[0] + 1e1*penalty
 
     u_exct_int = u_exct.at[vert_unknown_list].get()
 
@@ -213,7 +211,6 @@ def main(
                       f"{output_dir}{num_points}_u_gnin(2).png",
                       plot_with_lines = True)
 
-
     u_fem = p_2d.get_u_fem()
     p_2d.plot_on_mesh(u_fem,
                       "",
@@ -226,6 +223,15 @@ def main(
     p_2d.plot_on_mesh(jnp.abs(u_exct - u_gnin),
                       "",
                       f"{output_dir}{num_points}_u_gnin_err.png")
+
+    # The commented below part causes issues...
+    # plt = p_2d.get_mesh_plt(jnp.abs(u_exct - u_gnin))
+    # plt.xlabel('x')
+    # plt.ylabel('y')
+    # plt.scatter(xys_inp[data_node_inds,0], xys_inp[data_node_inds,1],
+    #             marker = "o", color = "black")
+    # plt.savefig(f"{output_dir}{num_points}_u_gcn_err_int_data.png")
+    # plt.close()
 
     # Plot the loss history
     iter_ids = history["iter_ids"]
@@ -247,6 +253,15 @@ def main(
     plt.savefig(f"{output_dir}{num_points}_loss_err.png")
     plt.close()
 
+    # Plot the f vals
+    f_vals = history["metric_vals"][:,1]
+    plt.plot(iter_ids, f_vals, color="r")
+    plt.xlabel("iteration number")
+    plt.ylabel("f")
+    plt.grid()
+    plt.savefig(f"{output_dir}{num_points}_f_val.png")
+    plt.close()
+
     plt.scatter(loss_vals, rel_l2_err_vals, c=iter_ids, cmap='jet')
     plt.xlabel("Loss")
     plt.ylabel("Relative l2 loss")
@@ -255,6 +270,16 @@ def main(
     plt.xscale("log")
     plt.yscale("log")
     plt.savefig(f"{output_dir}{num_points}_loss_err_log.png")
+    plt.close()
+
+
+    penalty_vals = history["metric_vals"][:,2]
+    plt.plot(iter_ids, penalty_vals, color="black")
+    plt.xlabel("iteration number")
+    plt.ylabel("penalty value")
+    plt.yscale("log")
+    plt.grid()
+    plt.savefig(f"{output_dir}{num_points}_penalty_val.png")
     plt.close()
 
     jnp.savez(f"{output_dir}details.npz",
@@ -280,4 +305,4 @@ if __name__ == "__main__":
     except:
         num_points = 4
 
-    err = main(num_points, u, f_guess, num_iters=100, learning_rate=5e-4, output_dir = "trial/")
+    err = main(num_points, u, f_guess, num_iters=10000, learning_rate=5e-4, output_dir = "trial/")
