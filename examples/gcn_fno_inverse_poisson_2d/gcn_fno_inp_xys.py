@@ -94,18 +94,18 @@ def main(
             num_points,
             u = u,
             f = f_guess,
-            gcn_num_hidden_layers = 3,
-            gcn_num_hidden_neurons = 10,
-            N_lat_x = 16,
-            N_lat_y = 16,
+            gcn_num_hidden_layers = 2,
+            gcn_num_hidden_neurons = 5,
+            N_lat_x = 32,
+            N_lat_y = 32,
             fno_modes1 = 5,
             fno_modes2 = 5,
             fno_width  = 1,
             fno_activation = jnp.tanh,
-            fno_n_blocks = 2,
+            fno_n_blocks = 5,
             num_iters = 100,
             learning_rate = 5e-2,
-            num_internal_data_points = 2,
+            num_internal_data_points = 4,
             output_dir = "trial/"
             ):
     key_for_generating_random_numbers = jax.random.PRNGKey(69)
@@ -224,15 +224,6 @@ def main(
                       "",
                       f"{output_dir}{num_points}_u_gnin_err.png")
 
-    # The commented below part causes issues...
-    # plt = p_2d.get_mesh_plt(jnp.abs(u_exct - u_gnin))
-    # plt.xlabel('x')
-    # plt.ylabel('y')
-    # plt.scatter(xys_inp[data_node_inds,0], xys_inp[data_node_inds,1],
-    #             marker = "o", color = "black")
-    # plt.savefig(f"{output_dir}{num_points}_u_gcn_err_int_data.png")
-    # plt.close()
-
     # Plot the loss history
     iter_ids = history["iter_ids"]
     loss_vals = history["loss_vals"]
@@ -294,6 +285,14 @@ def main(
               metric_vals = history["metric_vals"]
               )
 
+    plt2 = p_2d.get_mesh_plt(jnp.abs(u_exct - u_gnin))
+    plt2.xlabel('x')
+    plt2.ylabel('y')
+    plt2.scatter(xys_inp[data_node_inds,0], xys_inp[data_node_inds,1],
+                marker = "o", color = "black")
+    plt2.savefig(f"{output_dir}{num_points}_u_gcn_err_int_data.png")
+    plt2.close()
+
     relative_l2_error = \
             jnp.linalg.norm(u_gnin - u_exct) / jnp.linalg.norm(u_exct)
 
@@ -306,3 +305,4 @@ if __name__ == "__main__":
         num_points = 4
 
     err = main(num_points, u, f_guess, num_iters=10000, learning_rate=5e-4, output_dir = "trial/")
+    print(err)
